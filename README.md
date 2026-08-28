@@ -1,6 +1,6 @@
 # speclite
 
-> A condensed, 5-phase spec-driven development workflow adapted from [GitHub Spec Kit](https://github.com/github/spec-kit) - with a built-in manager, per-feature reference folders, and phase-by-phase check logs.
+> A condensed, 5-phase spec-driven development workflow adapted from [GitHub Spec Kit](https://github.com/github/spec-kit) - with a built-in manager, per-feature reference folders, phase-by-phase check logs, and installable commands + skills matching Spec Kit's own distribution.
 
 **[العربية](#العربية) | [English](#english)**
 
@@ -28,6 +28,7 @@
 - **مجلد `references/`** لكل ميزة، بداخله `PRD/ images/ fonts/ sounds/ videos/ data/ docs/` لوضع أي مستندات أو صور أو ملفات مرجعية تخص الميزة.
 - **مجلد `logs/`** لكل ميزة، بمجلد فرعي لكل مرحلة، يحوي سجل فحوصات تلقائي بالإضافة لأي توثيق إضافي (نتائج اختبارات، لقطات شاشة، ملاحظات) ينظّمه الوكيل حسب النوع.
 - سكربتات **Python** و **PowerShell** متطابقة تمامًا، تعمل على أي نظام تشغيل.
+- تُثبَّت كملفات أوامر مسطّحة `.agents/commands/*.md` **وأيضًا** كمجلدات `skills/<name>/SKILL.md` مستقلة بذاتها — نفس أسلوب التوزيع المزدوج الذي يستخدمه Spec Kit نفسه.
 
 ### التثبيت
 
@@ -45,7 +46,13 @@
    pwsh speclite/Install.ps1
    ```
 
-سكربت التثبيت **لا يكتب إلا داخل مجلد `.speclite/`** الجديد، ولا يمس أي ملف آخر في مشروعك، ولا يستبدل أي ملف موجود مسبقًا - إذا وُجد تعارض يتجاوزه ويخبرك في النهاية بما تم تخطيه، حتى تستطيع مراجعته يدويًا. آمن لإعادة التشغيل في أي وقت (مثلًا بعد تحديث النسخة).
+سكربت التثبيت يوزّع الملفات في **3 مواقع فقط ولا يكتب في غيرها إطلاقًا**:
+
+- `.speclite/` — الآلية الداخلية: السكربتات، القوالب، وحالة المشروع.
+- `.agents/commands/` — ملفات الأوامر الخمسة، بشكل مسطّح، لأي وكيل يقرأ أوامر مخصّصة من مجلد `.agents/` على مستوى المشروع.
+- `skills/` — نفس المراحل الخمس + المدير، كل واحدة كمجلد `skills/<name>/SKILL.md` مستقل بذاته — بنفس طريقة Spec Kit تمامًا في توزيع `skills/speckit-<name>/SKILL.md`.
+
+لا يستبدل أي ملف موجود مسبقًا في أي من هذه المواقع الثلاثة — إذا وُجد تعارض يتجاوزه ويخبرك في النهاية بما تم تخطيه، حتى تستطيع مراجعته يدويًا. آمن لإعادة التشغيل في أي وقت (مثلًا بعد تحديث النسخة).
 
 ### الاستخدام
 
@@ -55,7 +62,7 @@
 python .speclite/scripts/python/status.py --json
 ```
 
-النتيجة تخبرك مباشرة بالمرحلة التالية (`NEXT_PHASE`) وسببها. تابع القراءة والتنفيذ من ملف الأمر المطابق داخل `.speclite/commands/`، ثم أعد تشغيل `status` بعد كل مرحلة للانتقال تلقائيًا للتالية:
+النتيجة تخبرك مباشرة بالمرحلة التالية (`NEXT_PHASE`) وسببها. تابع القراءة والتنفيذ من ملف الأمر المطابق داخل `.agents/commands/` (أو المهارة المطابقة داخل `skills/`)، ثم أعد تشغيل `status` بعد كل مرحلة للانتقال تلقائيًا للتالية:
 
 ```
 constitution → specify → plan → tasks → implement
@@ -89,6 +96,8 @@ Also included:
 - A **`references/` folder** per feature, with `PRD/ images/ fonts/ sounds/ videos/ data/ docs/` subfolders for any source material relevant to that feature.
 - A **`logs/` folder** per feature, with one subfolder per phase holding an automatic check log plus any extra documentation (test results, screenshots, notes) the agent organizes by type.
 - **Python** and **PowerShell** scripts, fully mirrored, so it works the same way on any OS.
+- Installs as both flat `.agents/commands/*.md` files and self-contained `skills/<name>/SKILL.md`
+  folders - the same dual distribution Spec Kit itself uses.
 
 ### Installation
 
@@ -106,7 +115,18 @@ Also included:
    pwsh speclite/Install.ps1
    ```
 
-The installer **only ever writes inside the new `.speclite/` folder** - it never touches anything else in your project, and it never overwrites a file that already exists. If it finds a conflict, it skips that file and reports it at the end so you can review it manually. Safe to re-run any time (e.g. after updating to a newer version).
+The installer deploys to **three locations only, and never writes anywhere else**:
+
+- `.speclite/` - internal machinery: scripts, templates, and project state.
+- `.agents/commands/` - the 5 phase command files, flat, for any agent that reads
+  project-level custom slash-commands from an `.agents/` directory.
+- `skills/` - the same 5 phases plus the manager, each as a self-contained
+  `skills/<name>/SKILL.md` folder - matching Spec Kit's own `skills/speckit-<name>/SKILL.md`
+  distribution exactly.
+
+It never overwrites a file that already exists at any of these three destinations. If it finds
+a conflict, it skips that file and reports it at the end so you can review it manually. Safe to
+re-run any time (e.g. after updating to a newer version).
 
 ### Usage
 
@@ -116,7 +136,7 @@ After installing, run the status checker (or let your AI agent do this automatic
 python .speclite/scripts/python/status.py --json
 ```
 
-The output tells you exactly what to do next (`NEXT_PHASE`) and why. Follow the matching command file under `.speclite/commands/`, then re-run `status` after each phase to automatically move to the next one:
+The output tells you exactly what to do next (`NEXT_PHASE`) and why. Follow the matching command file under `.agents/commands/` (or the matching skill under `skills/`), then re-run `status` after each phase to automatically move to the next one:
 
 ```
 constitution → specify → plan → tasks → implement

@@ -1,6 +1,10 @@
 ---
-name: speclite
-description: A condensed, 5-phase spec-driven feature-development workflow adapted from GitHub's Spec Kit, with a manager that auto-detects which phase to run next so the user never has to track progress themselves. Phases: constitution -> specify -> plan -> tasks -> implement. Constitution is a single project-wide file, matching Spec Kit's own model - never per-feature, and its non-negotiable MUST rules are never silently edited around. Includes a references/ folder per feature for user-supplied PRDs, images, fonts, sounds, videos, and data, and a logs/ folder per feature with one subfolder per feature-level phase for check history plus any test output, screenshots, or extra docs the agent wants to keep. Use this whenever the user wants to formalize a feature before coding, mentions "spec kit", "spec-driven development", asks to turn a PRD or a rough idea into a spec/plan/tasks, or the project already contains a `.speclite/` directory or a `specs/NNN-*` folder. Trigger it proactively for any non-trivial "build me a feature" request where jumping straight to code would skip requirements and planning. This skill IS the manager - it decides which phase to run, the user does not need to know or remember.
+name: "speclite"
+description: "A condensed, 5-phase spec-driven feature-development workflow adapted from GitHub's Spec Kit, with a manager that auto-detects which phase to run next so the user never has to track progress themselves. Phases: constitution -> specify -> plan -> tasks -> implement. Constitution is a single project-wide file, matching Spec Kit's own model - never per-feature, and its non-negotiable MUST rules are never silently edited around. Includes a references/ folder per feature for user-supplied PRDs, images, fonts, sounds, videos, and data, and a logs/ folder per feature with one subfolder per feature-level phase for check history plus any test output, screenshots, or extra docs the agent wants to keep. Use this whenever the user wants to formalize a feature before coding, mentions "spec kit", "spec-driven development", asks to turn a PRD or a rough idea into a spec/plan/tasks, or the project already contains a `.speclite/` directory or a `specs/NNN-*` folder. Trigger it proactively for any non-trivial "build me a feature" request where jumping straight to code would skip requirements and planning. This skill IS the manager - it decides which phase to run, the user does not need to know or remember."
+compatibility: "Requires speclite project structure with .speclite/ directory"
+metadata:
+  author: "speclite"
+  source: "SKILL.md"
 ---
 
 # speclite
@@ -21,11 +25,11 @@ The output tells you exactly what to do:
 | `NEXT_PHASE` | Meaning | Your action |
 |---|---|---|
 | `install` | `.speclite/` doesn't exist in this repo yet | See "First use" below, then re-run status |
-| `constitution` | Phase 1 needed | Read `commands/speclite.constitution.md`, execute it |
-| `specify` | Phase 2 needed | Read `commands/speclite.specify.md`, execute it |
-| `plan` | Phase 3 needed | Read `commands/speclite.plan.md`, execute it |
-| `tasks` | Phase 4 needed | Read `commands/speclite.tasks.md`, execute it |
-| `implement` | Phase 5 needed | Read `commands/speclite.implement.md`, execute it |
+| `constitution` | Phase 1 needed | Read `.agents/commands/speclite.constitution.md`, execute it |
+| `specify` | Phase 2 needed | Read `.agents/commands/speclite.specify.md`, execute it |
+| `plan` | Phase 3 needed | Read `.agents/commands/speclite.plan.md`, execute it |
+| `tasks` | Phase 4 needed | Read `.agents/commands/speclite.tasks.md`, execute it |
+| `implement` | Phase 5 needed | Read `.agents/commands/speclite.implement.md`, execute it |
 | `ambiguous` | Multiple features, none active | Ask the user which one (see below) - this is the only routine case where you ask before acting |
 | `done` | Feature fully shipped | Tell the user; offer to start a new feature with `/speclite.specify` |
 
@@ -74,11 +78,11 @@ After installing, re-run `status` - it will report `NEXT_PHASE: constitution`.
 
 | Phase | Command file | Replaces (Spec Kit) |
 |---|---|---|
-| 1. Constitution | `commands/speclite.constitution.md` | `constitution` |
-| 2. Specify | `commands/speclite.specify.md` | `specify` + `clarify` |
-| 3. Plan | `commands/speclite.plan.md` | `plan` + `checklist` |
-| 4. Tasks | `commands/speclite.tasks.md` | `tasks` + `analyze` |
-| 5. Implement | `commands/speclite.implement.md` | `implement` + `converge` |
+| 1. Constitution | `.agents/commands/speclite.constitution.md` | `constitution` |
+| 2. Specify | `.agents/commands/speclite.specify.md` | `specify` + `clarify` |
+| 3. Plan | `.agents/commands/speclite.plan.md` | `plan` + `checklist` |
+| 4. Tasks | `.agents/commands/speclite.tasks.md` | `tasks` + `analyze` |
+| 5. Implement | `.agents/commands/speclite.implement.md` | `implement` + `converge` |
 
 Each command file is self-contained - read it fresh each time you execute that phase, don't rely
 on memory of what it said last time. Supporting reference guides the phase commands point to

@@ -4,7 +4,9 @@ A 5-phase clone of [GitHub Spec Kit](https://github.com/github/spec-kit)'s spec-
 development workflow, with a built-in manager that auto-detects which phase to run next, a
 `references/` folder per feature for user-supplied source material, and a `logs/` folder per
 feature with one subfolder per phase for check history plus whatever else the agent wants to
-keep (test output, screenshots, extra docs).
+keep (test output, screenshots, extra docs). Installs as both flat `.agents/commands/*.md`
+files and self-contained `skills/<name>/SKILL.md` folders, matching Spec Kit's own dual
+distribution.
 
 ## Install
 
@@ -13,15 +15,28 @@ keep (test output, screenshots, extra docs).
    - Linux/macOS: `python speclite/install.py`
    - Windows: `pwsh speclite/Install.ps1`
 
-The installer **only ever writes inside `<project>/.speclite/`** - nothing else in your project
-is touched. It never overwrites a file that already exists at the destination; if you re-run it
-after updating this package, conflicting files are skipped and listed at the end instead of
-being clobbered, so you can diff and merge them by hand if you want the newer version.
+The installer deploys to three locations and **only ever writes inside them** - nothing else in
+your project is touched:
+
+- `.speclite/` - internal machinery: scripts, templates, and project state.
+- `.agents/commands/` - the 5 phase command files, flat, for any agent that reads
+  project-level custom slash-commands.
+- `skills/` - the same 5 phases plus the manager, each as a self-contained
+  `skills/<name>/SKILL.md` folder, matching Spec Kit's own `skills/speckit-<name>/SKILL.md`
+  layout.
+
+It never overwrites a file that already exists at any destination; if you re-run it after
+updating this package, conflicting files are skipped and listed at the end instead of being
+clobbered, so you can diff and merge them by hand if you want the newer version.
 
 ```
 $ python speclite/install.py
-Installing speclite into: /path/to/project/.speclite
-Installed 27 file(s).
+Installing speclite into: /path/to/project
+  -> .speclite/    (scripts, templates, project state)
+  -> .agents/commands/  (the 5 phase command files)
+  -> skills/       (Skill-format wrappers, one per phase + the manager)
+
+Installed 34 file(s).
 No conflicts.
 
 Done. Next step: run /speclite.constitution (Phase 1) to get started.
@@ -75,7 +90,22 @@ watered down. Extension-hook machinery (`.specify/extensions.yml`) was dropped f
 
 ```
 your-project/
-├── speclite/                     # this package - keep it, install.py re-runs safely
+├── speclite/                       # this package - keep it, install.py re-runs safely
+│   └── tools/build_skills.py       # regenerates skills/ from commands/ after an edit
+├── .agents/
+│   └── commands/                   # the 5 phase command files, flat
+│       ├── speclite.constitution.md
+│       ├── speclite.specify.md
+│       ├── speclite.plan.md
+│       ├── speclite.tasks.md
+│       └── speclite.implement.md
+├── skills/                         # Skill-format wrappers - same content, self-contained
+│   ├── speclite/SKILL.md           # the manager (mirrors speclite/SKILL.md, paths rewritten)
+│   ├── speclite-constitution/SKILL.md
+│   ├── speclite-specify/SKILL.md
+│   ├── speclite-plan/SKILL.md
+│   ├── speclite-tasks/SKILL.md
+│   └── speclite-implement/SKILL.md
 ├── .speclite/
 │   ├── feature.json                # which specs/NNN-* is "active"
 │   ├── memory/
@@ -91,12 +121,11 @@ your-project/
 │   │   ├── checklist-guide.md      # Phase 3 reference guide
 │   │   ├── analyze-guide.md        # Phase 4 reference guide
 │   │   └── overrides/              # drop a same-named file here to override any template
-│   ├── scripts/
-│   │   ├── python/                 # status.py, constitution_setup.py, new_feature.py,
-│   │   │                           # setup_stage.py, setup_tasks_stage.py,
-│   │   │                           # check_prerequisites.py, log_check.py, common.py
-│   │   └── powershell/             # same set, PascalCase/.ps1
-│   └── commands/                   # the 5 phase command files, copied from speclite/commands/
+│   └── scripts/
+│       ├── python/                 # status.py, constitution_setup.py, new_feature.py,
+│       │                           # setup_stage.py, setup_tasks_stage.py,
+│       │                           # check_prerequisites.py, log_check.py, common.py
+│       └── powershell/             # same set, PascalCase/.ps1
 └── specs/
     └── 001-your-feature/
         ├── spec.md
@@ -116,6 +145,17 @@ your-project/
                 ├── screenshots/           # agent-created, as needed
                 └── notes/                 # agent-created, as needed
 ```
+
+### Commands vs. Skills - why both?
+
+Same split Spec Kit itself uses: `.agents/commands/*.md` is a flat file an agent reads when it
+supports project-level custom slash-commands; `skills/<name>/SKILL.md` is the same instructions
+wrapped in the Skill format (frontmatter with `name`, `description`, `compatibility`,
+`metadata.source`) for agents that discover capabilities that way instead - Claude among them.
+The content is intentionally identical, not just similar: `tools/build_skills.py` generates
+every file under `skills/` directly from the matching file under `commands/`, so they can never
+drift apart as long as you re-run it after editing a command. Both get installed automatically;
+which one a given agent actually reads depends entirely on that agent, not on you.
 
 ## The check log (`logs/<phase>/index.md`)
 
@@ -152,14 +192,17 @@ python speclite/install.py
 #    at any point - every phase checks there before assuming anything.
 ```
 
-## Command files
+## Command files and their Skill wrappers
 
-- `commands/speclite.constitution.md`
-- `commands/speclite.specify.md`
-- `commands/speclite.plan.md`
-- `commands/speclite.tasks.md`
-- `commands/speclite.implement.md`
+- `commands/speclite.constitution.md` → `skills/speclite-constitution/SKILL.md`
+- `commands/speclite.specify.md` → `skills/speclite-specify/SKILL.md`
+- `commands/speclite.plan.md` → `skills/speclite-plan/SKILL.md`
+- `commands/speclite.tasks.md` → `skills/speclite-tasks/SKILL.md`
+- `commands/speclite.implement.md` → `skills/speclite-implement/SKILL.md`
 
-Each is a self-contained instruction file an AI agent reads before running that phase - same
-convention as Spec Kit's own `.md` command files. `SKILL.md` is the manager that decides which
-one to read, using `status.py` / `status.ps1`.
+Each `commands/*.md` file is the source of truth - a self-contained instruction file an AI agent
+reads before running that phase, same convention as Spec Kit's own `.md` command files. The
+matching `skills/*/SKILL.md` is generated from it (see `tools/build_skills.py`); after editing a
+command, re-run that script to keep both in sync. `SKILL.md` at the package root (and its
+generated twin `skills/speclite/SKILL.md`) is the manager that decides which phase to read next,
+using `status.py` / `status.ps1`.

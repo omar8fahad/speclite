@@ -9,8 +9,21 @@
     By default the target project is the PARENT of the folder this script lives in.
     Pass -TargetDir to install somewhere else.
 
+    What gets installed where:
+      .speclite/scripts/, .speclite/templates/  - internal machinery (state, scripts,
+                                                    templates)
+      .agents/commands/                          - the 5 phase command files, flat, for
+                                                    any agent that reads custom
+                                                    slash-commands from a project-level
+                                                    .agents/ directory
+      skills/speclite/, skills/speclite-<phase>/ - the same 5 phases (plus the manager)
+                                                    as self-contained Skill-format
+                                                    folders, matching Spec Kit's own
+                                                    skills/speckit-<name>/SKILL.md layout
+
     Guarantees:
-      - Only ever writes inside <target>/.speclite/ - nothing else in the project is touched.
+      - Only ever writes inside <target>/.speclite/, <target>/.agents/commands/, and
+        <target>/skills/ - nothing else in the project is touched.
       - Never overwrites or deletes an existing file. If a file already exists at the
         destination, it is left completely alone and reported as "skipped" at the end.
       - Safe to re-run any time - only adds missing files, never clobbers existing ones.
@@ -30,15 +43,15 @@ if (-not $TargetDir) {
 } else {
     $TargetDir = (Resolve-Path $TargetDir).Path
 }
-$SpecliteDir = Join-Path $TargetDir '.speclite'
 
 $CopySets = @(
-    @{ Src = 'templates'; Dst = 'templates' },
-    @{ Src = 'scripts/python'; Dst = 'scripts/python' },
-    @{ Src = 'scripts/powershell'; Dst = 'scripts/powershell' },
-    @{ Src = 'commands'; Dst = 'commands' }
+    @{ Src = 'templates'; Dst = '.speclite/templates' },
+    @{ Src = 'scripts/python'; Dst = '.speclite/scripts/python' },
+    @{ Src = 'scripts/powershell'; Dst = '.speclite/scripts/powershell' },
+    @{ Src = 'commands'; Dst = '.agents/commands' },
+    @{ Src = 'skills'; Dst = 'skills' }
 )
-$EnsureDirs = @('memory', 'logs')
+$EnsureDirs = @('.speclite/memory', '.speclite/logs')
 
 function Copy-TreeNonDestructive {
     param([string]$Src, [string]$Dst, [bool]$DryRun)
@@ -64,7 +77,10 @@ function Copy-TreeNonDestructive {
     return @{ Installed = $installed; Skipped = $skipped }
 }
 
-Write-Output "Installing speclite into: $SpecliteDir"
+Write-Output "Installing speclite into: $TargetDir"
+Write-Output '  -> .speclite/    (scripts, templates, project state)'
+Write-Output '  -> .agents/commands/  (the 5 phase command files)'
+Write-Output '  -> skills/       (Skill-format wrappers, one per phase + the manager)'
 if ($DryRun) { Write-Output '(dry run - nothing will be written)' }
 
 $allInstalled = @()
@@ -72,7 +88,7 @@ $allSkipped = @()
 
 foreach ($set in $CopySets) {
     $src = Join-Path $PackageRoot $set.Src
-    $dst = Join-Path $SpecliteDir $set.Dst
+    $dst = Join-Path $TargetDir $set.Dst
     $result = Copy-TreeNonDestructive -Src $src -Dst $dst -DryRun $DryRun
     $allInstalled += $result.Installed
     $allSkipped += $result.Skipped
@@ -80,7 +96,7 @@ foreach ($set in $CopySets) {
 
 foreach ($rel in $EnsureDirs) {
     if (-not $DryRun) {
-        New-Item -ItemType Directory -Force -Path (Join-Path $SpecliteDir $rel) | Out-Null
+        New-Item -ItemType Directory -Force -Path (Join-Path $TargetDir $rel) | Out-Null
     }
 }
 

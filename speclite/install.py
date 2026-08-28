@@ -8,8 +8,19 @@ By default the target project is the PARENT of the folder this script lives in -
 wherever you dropped the `speclite/` folder is treated as "next to the project root".
 Pass --target-dir explicitly if you'd rather install somewhere else.
 
+What gets installed where:
+  .speclite/scripts/, .speclite/templates/  - internal machinery (state, scripts, templates)
+  .agents/commands/                          - the 5 phase command files, flat, for any
+                                                agent that reads custom slash-commands from
+                                                a project-level .agents/ directory
+  skills/speclite/, skills/speclite-<phase>/ - the same 5 phases (plus the manager) as
+                                                self-contained Skill-format folders, matching
+                                                Spec Kit's own skills/speckit-<name>/SKILL.md
+                                                layout, for agents that use the Skill format
+
 Guarantees:
-  - Only ever writes inside <target>/.speclite/ - nothing else in the project is touched.
+  - Only ever writes inside <target>/.speclite/, <target>/.agents/commands/, and
+    <target>/skills/ - nothing else in the project is touched.
   - Never overwrites or deletes an existing file. If a file already exists at the
     destination, it is left completely alone and reported as "skipped" at the end.
   - Safe to re-run any time (e.g. after updating this package) - it will only add files
@@ -24,23 +35,24 @@ from pathlib import Path
 
 PACKAGE_ROOT = Path(__file__).resolve().parent
 
-# (source relative to PACKAGE_ROOT, destination relative to <target>/.speclite/)
+# (source relative to PACKAGE_ROOT, destination relative to <target_dir>)
 COPY_SETS: list[tuple[str, str]] = [
-    ("templates", "templates"),
-    ("scripts/python", "scripts/python"),
-    ("scripts/powershell", "scripts/powershell"),
-    ("commands", "commands"),
+    ("templates", ".speclite/templates"),
+    ("scripts/python", ".speclite/scripts/python"),
+    ("scripts/powershell", ".speclite/scripts/powershell"),
+    ("commands", ".agents/commands"),
+    ("skills", "skills"),
 ]
 
 # Empty directories to guarantee exist even before anything is written there.
-ENSURE_DIRS: list[str] = ["memory", "logs"]
+ENSURE_DIRS: list[str] = [".speclite/memory", ".speclite/logs"]
 
 
 def _help_text(argv0: str) -> str:
     return (
         f"Usage: {argv0} [--target-dir <path>] [--dry-run]\n"
-        "  --target-dir <path>  Install into <path>/.speclite/ instead of the parent of\n"
-        "                       this script's folder\n"
+        "  --target-dir <path>  Install into <path> instead of the parent of this\n"
+        "                       script's folder\n"
         "  --dry-run            Show what would happen without writing anything\n"
     )
 
@@ -94,9 +106,10 @@ def main(argv: list[str] | None = None) -> int:
             return 1
         target_dir = Path(args[i + 1]).resolve()
 
-    speclite_dir = target_dir / ".speclite"
-
-    print(f"Installing speclite into: {speclite_dir}")
+    print(f"Installing speclite into: {target_dir}")
+    print("  -> .speclite/    (scripts, templates, project state)")
+    print("  -> .agents/commands/  (the 5 phase command files)")
+    print("  -> skills/       (Skill-format wrappers, one per phase + the manager)")
     if dry_run:
         print("(dry run - nothing will be written)")
 
@@ -105,13 +118,13 @@ def main(argv: list[str] | None = None) -> int:
 
     for src_rel, dst_rel in COPY_SETS:
         src = PACKAGE_ROOT / src_rel
-        dst = speclite_dir / dst_rel
+        dst = target_dir / dst_rel
         installed, skipped = _copy_tree_non_destructive(src, dst, dry_run=dry_run)
         all_installed.extend(installed)
         all_skipped.extend(skipped)
 
     for rel in ENSURE_DIRS:
-        d = speclite_dir / rel
+        d = target_dir / rel
         if not dry_run:
             d.mkdir(parents=True, exist_ok=True)
 
@@ -136,7 +149,7 @@ def main(argv: list[str] | None = None) -> int:
         print("No conflicts.")
 
     if not dry_run:
-        print(f"\nDone. Next step: run /speclite.constitution (Phase 1) to get started.")
+        print("\nDone. Next step: run /speclite.constitution (Phase 1) to get started.")
     return 0
 
 
